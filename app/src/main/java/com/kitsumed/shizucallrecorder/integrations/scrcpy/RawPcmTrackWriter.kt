@@ -7,8 +7,10 @@ import java.io.File
 import java.io.FileOutputStream
 
 /**
- * Writes one channel from scrcpy RAW stereo PCM16LE into a mono PCM16LE temporary file.
- * Packet PTS keeps independent uplink/downlink captures aligned to one monotonic origin.
+ * Writes channel 0 from scrcpy RAW stereo PCM16LE into mono PCM16LE.
+ *
+ * PTS is used only for initial alignment. After the first packet, samples are
+ * written continuously to avoid clicks caused by packet timestamp jitter.
  */
 class RawPcmTrackWriter(
     file: File,
@@ -22,7 +24,9 @@ class RawPcmTrackWriter(
     }
 
     private val output = BufferedOutputStream(FileOutputStream(file))
+
     private var writtenFrames = 0L
+    private var started = false
 
     @Synchronized
     fun writePacket(packet: ScrcpyClient.AudioPacket) {
@@ -32,30 +36,37 @@ class RawPcmTrackWriter(
         val frameCount = data.size / INPUT_FRAME_BYTES
         if (frameCount <= 0) return
 
-        val targetFrame =
-            ((packet.pts - originUs).coerceAtLeast(0L) * SAMPLE_RATE) / 1_000_000L
+        /*
+         * Use PTS only once to align uplink and downlink against the same
+         * CLOCK_MONOTONIC origin.
+         */
+        if (!started) {
+            val startFrame =
+                ((packet.pts - originUs).coerceAtLeast(0L) * SAMPLE_RATE) /
+                    1_000_000L
 
-        if (targetFrame > writtenFrames) {
-            writeSilence(targetFrame - writtenFrames)
+            if (startFrame > 0) {
+                writeSilence(startFrame)
+            }
+
+            started = true
+
+            AppLogger.d(
+                "RAW track initial alignment: pts=${packet.pts} " +
+                    "origin=$originUs startFrame=$startFrame"
+            )
         }
 
-        // Audio timestamps can overlap slightly. Do not write samples twice.
-        val skipFrames = (writtenFrames - targetFrame)
-            .coerceAtLeast(0L)
-            .coerceAtMost(frameCount.toLong())
-            .toInt()
+        /*
+         * Each VOICE_CALL_UPLINK/DOWNLINK stream arrives as stereo PCM16LE.
+         * Keep channel 0 from each stream.
+         */
+        val mono = ByteArray(frameCount * OUTPUT_FRAME_BYTES)
 
-        if (skipFrames >= frameCount) return
-
-        val outputFrames = frameCount - skipFrames
-        val mono = ByteArray(outputFrames * OUTPUT_FRAME_BYTES)
-
-        var src = skipFrames * INPUT_FRAME_BYTES
+        var src = 0
         var dst = 0
 
-        repeat(outputFrames) {
-            // VOICE_CALL_UPLINK/DOWNLINK arrive as stereo PCM.
-            // Keep channel 0 from each independent source.
+        repeat(frameCount) {
             mono[dst] = data[src]
             mono[dst + 1] = data[src + 1]
 
@@ -64,7 +75,7 @@ class RawPcmTrackWriter(
         }
 
         output.write(mono)
-        writtenFrames += outputFrames
+        writtenFrames += frameCount
     }
 
     private fun writeSilence(frames: Long) {
@@ -83,6 +94,9 @@ class RawPcmTrackWriter(
     override fun close() {
         runCatching { output.flush() }
         runCatching { output.close() }
-        AppLogger.d("RAW PCM temporary track closed: frames=$writtenFrames")
+
+        AppLogger.d(
+            "RAW PCM temporary track closed: frames=$writtenFrames"
+        )
     }
 }
