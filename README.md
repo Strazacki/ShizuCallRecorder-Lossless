@@ -1,3 +1,33 @@
+# ShizuCallRecorder Lossless Fork
+
+
+[![Latest Release](https://img.shields.io/github/v/release/Strazacki/ShizuCallRecorder-Lossless?style=for-the-badge)](https://github.com/Strazacki/ShizuCallRecorder-Lossless/releases/latest)
+
+
+Fork of ShizuCallRecorder adding true lossless dual-channel call recording.
+
+## Lossless dual-channel recording
+
+- WAV PCM signed 16-bit little-endian
+- 48 kHz sample rate
+- Stereo output
+- **Left channel = uplink / local speaker**
+- **Right channel = downlink / remote caller**
+- No Opus/AAC compression in lossless mode
+- Uses two independent scrcpy audio streams
+- Based on the dual-track implementation from PR #72
+
+Tested with real phone calls.
+
+### How to enable
+
+1. Enable `Record each side separately`
+2. Set `Audio codec` to `WAV lossless (dual-channel)`
+
+> Experimental fork. The lossless mode produces large WAV files.
+
+---
+
 # ShizuCallRecorder
 [![GitHub Repo stars](https://img.shields.io/github/stars/kitsumed/ShizuCallRecorder?style=for-the-badge&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI%2BPHRpdGxlPnN0YXI8L3RpdGxlPjxwYXRoIGQ9Ik0xMiwxNy4yN0wxOC4xOCwyMUwxNi41NCwxMy45N0wyMiw5LjI0TDE0LjgxLDguNjJMMTIsMkw5LjE5LDguNjJMMiw5LjI0TDcuNDUsMTMuOTdMNS44MiwyMUwxMiwxNy4yN1oiIGZpbGw9IndoaXRlIiAvPjwvc3ZnPg%3D%3D&labelColor=gray&color=gold)](https://github.com/kitsumed/ShizuCallRecorder/graphs/traffic)
 [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/kitsumed/ShizuCallRecorder/total?style=for-the-badge&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI%2BPHRpdGxlPmRvd25sb2FkPC90aXRsZT48cGF0aCBkPSJNNSwyMEgxOVYxOEg1TTE5LDlIMTVWM0g5VjlINUwxMiwxNkwxOSw5WiIgZmlsbD0id2hpdGUiIC8%2BPC9zdmc%2B&label=Downloads&labelColor=gray&color=gold&)](https://github.com/kitsumed/ShizuCallRecorder/releases/)
