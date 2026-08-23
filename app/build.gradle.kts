@@ -129,7 +129,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.kitsumed.shizucallrecorder"
+        applicationId = "com.strazacki.shizucallrecorder.lossless"
         minSdk = 30
         targetSdk = 36
         // Keep theses two values hard-coded here and update them per version. (To keep F-Droid compatibility since their parser is very basic)
