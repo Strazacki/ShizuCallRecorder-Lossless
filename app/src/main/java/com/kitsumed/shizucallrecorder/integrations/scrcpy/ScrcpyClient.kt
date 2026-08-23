@@ -191,7 +191,9 @@ class ScrcpyClient(
 
             listener.onMetadataReceived(resolvedCodec)
 
-            var hasReceivedConfig = false
+            // Encoded codecs send codec-specific CONFIG data first.
+            // RAW PCM has no codec config packet, so it may start directly with media data.
+            var hasReceivedConfig = resolvedCodec == ScrcpyAudioCodec.RAW
             while (running) {
                 // Read the 12-byte per-packet header — mirrors Streamer.java#writeFrameMeta().
                 val header = readPacketHeader(inputStream)

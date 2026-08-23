@@ -70,6 +70,22 @@ enum class ScrcpyAudioCodec(
         mimeType           = MediaFormat.MIMETYPE_AUDIO_AAC,
         containerExtension = ".m4a",
         titleResId         = R.string.audio_codec_aac
+    ),
+
+    /**
+     * Raw PCM from scrcpy-server. This codec bypasses MediaMuxer and is used internally
+     * by the lossless dual-channel WAV recording path.
+     *
+     * FourCC: ASCII "\0raw" = 0x00726177.
+     */
+    RAW(
+        cliKey             = "raw",
+        codecFourCC        = 0x00726177,
+        defaultBitRate     = 0,
+        outputFormat       = -1,
+        mimeType           = MediaFormat.MIMETYPE_AUDIO_RAW,
+        containerExtension = ".pcm",
+        titleResId         = R.string.audio_codec_raw
     );
 
     companion object {
