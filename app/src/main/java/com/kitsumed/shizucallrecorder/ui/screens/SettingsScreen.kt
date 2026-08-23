@@ -806,7 +806,7 @@ private fun AudioSection(preferences: AppPreferences, updateTrigger: Int, action
         }
 
         val codecOptions = ScrcpyAudioCodec.entries
-            .filter { it != ScrcpyAudioCodec.RAW }
+            .filter { it != ScrcpyAudioCodec.RAW || dualTrackRecording }
             .map { OptionItem(it.cliKey, stringResource(it.titleResId)) }
         
         M3DropdownField(

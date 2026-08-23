@@ -84,7 +84,7 @@ enum class ScrcpyAudioCodec(
         defaultBitRate     = 0,
         outputFormat       = -1,
         mimeType           = MediaFormat.MIMETYPE_AUDIO_RAW,
-        containerExtension = ".pcm",
+        containerExtension = ".wav",
         titleResId         = R.string.audio_codec_raw
     );
 

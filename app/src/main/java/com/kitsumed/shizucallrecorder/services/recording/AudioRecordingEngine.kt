@@ -79,6 +79,12 @@ class AudioRecordingEngine {
     /** The downlink track of the current session. Null unless dual-track recording is enabled. */
     private var secondaryTrack: TrackSession? = null
 
+    /** Dedicated RAW uplink/downlink -> stereo WAV session. */
+    private var losslessDualSession: LosslessDualRecordingSession? = null
+
+    /** Retained after release so post-recording actions can access the finished file. */
+    private var completedRecordingUri: Uri? = null
+
     /** Metadata captured during the [startPipeline] and locked. Used for checks in [release]. */
     var initializationMetadata: EnrichedCallData? = null
         set(value) {
@@ -95,11 +101,14 @@ class AudioRecordingEngine {
      * offer post-recording file actions.
      */
     val currentRecordingUri: Uri?
-        get() = primaryTrack?.recordingUri
+        get() = completedRecordingUri
+            ?: losslessDualSession?.recordingUri
+            ?: primaryTrack?.recordingUri
 
     /** True while the primary track's audio-pipe read coroutine is still active (capturing audio). */
     val isActivelyCapturingAudio: Boolean
-        get() = primaryTrack?.audioPipeReadJob?.isActive == true
+        get() = losslessDualSession?.isActivelyCapturingAudio
+            ?: (primaryTrack?.audioPipeReadJob?.isActive == true)
 
     /** Whether the recording is currently paused by the user. */
     @Volatile
@@ -133,6 +142,30 @@ class AudioRecordingEngine {
                 userFriendlyMessage = context.getString(R.string.recording_error_server_missing),
                 technicalLogMessage = "scrcpy-server missing or SHA256 check was invalid at $serverPath"
             )
+        }
+
+        // RAW is exposed only as a lossless dual-channel mode.
+        if (codecEnum == ScrcpyAudioCodec.RAW) {
+            if (!preferences.isDualTrackRecordingEnabled()) {
+                throw PipelineInitializationException(
+                    userFriendlyMessage = context.getString(R.string.recording_error_start_failed),
+                    technicalLogMessage = "RAW codec requires dual-track recording"
+                )
+            }
+
+            val session = LosslessDualRecordingSession(
+                context = context,
+                service = service,
+                metadata = metadata,
+                folderUri = folderUri,
+                serverPath = serverPath,
+                debugging = isDebuggingModeEnabled,
+                isPaused = { isPaused }
+            )
+
+            session.start()
+            losslessDualSession = session
+            return
         }
 
         // Shared wall-clock origin so dual-track files' PTS=0 lines up to the exact same instant.
@@ -322,6 +355,16 @@ class AudioRecordingEngine {
      */
     fun release(shellService: IShellService?) {
         AppLogger.i( "Releasing session resources and recording pipeline...")
+
+        losslessDualSession?.let { session ->
+            session.release()
+            completedRecordingUri = session.recordingUri
+            losslessDualSession = null
+            return
+        }
+
+        completedRecordingUri = primaryTrack?.recordingUri
+
         releaseTrack(primaryTrack, shellService, isSecondary = false)
         releaseTrack(secondaryTrack, shellService, isSecondary = true)
         primaryTrack = null
@@ -364,6 +407,13 @@ class AudioRecordingEngine {
      * created during the pipeline initialization (both tracks', when dual-track recording was active).
      */
     fun cancel(context: Context, shellService: IShellService?) {
+        losslessDualSession?.let {
+            it.cancel()
+            losslessDualSession = null
+            completedRecordingUri = null
+            return
+        }
+
         val urisToDelete = listOfNotNull(primaryTrack?.recordingUri, secondaryTrack?.recordingUri)
         release(shellService)
         urisToDelete.forEach { uri ->
@@ -374,6 +424,7 @@ class AudioRecordingEngine {
                 AppLogger.w( "Failed to cleanup empty file", e)
             }
         }
+        completedRecordingUri = null
     }
 }
 

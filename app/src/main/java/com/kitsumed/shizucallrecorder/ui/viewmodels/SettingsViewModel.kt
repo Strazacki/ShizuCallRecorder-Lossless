@@ -257,6 +257,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     /** Enables or disables dual-track recording (separate uplink/downlink files). */
     override fun setDualTrackRecordingEnabled(enabled: Boolean) {
         preferences.setDualTrackRecordingEnabled(enabled)
+
+        if (!enabled && preferences.getAudioCodec() == ScrcpyAudioCodec.RAW.cliKey) {
+            preferences.setAudioCodec(ScrcpyAudioCodec.OPUS.cliKey)
+            preferences.setAudioBitRate(ScrcpyAudioCodec.OPUS.defaultBitRate)
+        }
+
         refresh()
     }
 

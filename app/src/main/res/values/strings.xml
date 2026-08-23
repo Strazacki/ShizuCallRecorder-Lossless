@@ -213,7 +213,7 @@
     <string name="settings_audio_bitrate_recommendation">If you have difficulties, try AAC, it is widely supported by OEMs.</string>
     <string name="audio_codec_opus" translatable="false">Opus</string>
     <string name="audio_codec_aac" translatable="false">AAC</string>
-    <string name="audio_codec_raw" translatable="false">RAW PCM</string>
+    <string name="audio_codec_raw" translatable="false">WAV lossless (dual-channel)</string>
 
     <string name="settings_audio_bitrate">Audio bit rate</string>
     <string name="audio_bitrate_kbps" translatable="false">%1$d kbps</string>
