@@ -133,13 +133,16 @@ object AppLogger {
         val stackTrace = Throwable().stackTrace
         val loggerClassName = AppLogger::class.java.name
 
+        // applicationId may differ from the Kotlin/Java package in forks.
+        // Derive the code package from AppLogger itself instead of BuildConfig.APPLICATION_ID.
+        val codePackage = loggerClassName.substringBefore(".utils.")
+
         for (element in stackTrace) {
             val className = element.className
-            // Skip AppLogger itself and anything outside the app's package (e.g., system or library classes)
-            if (className.startsWith(BuildConfig.APPLICATION_ID) && className != loggerClassName) {
+
+            if (className.startsWith("$codePackage.") && className != loggerClassName) {
                 var simpleName = className.substringAfterLast('.')
 
-                // Strip anonymous class suffixes (e.g., MyClass$1)
                 val dollarIndex = simpleName.indexOf('$')
                 if (dollarIndex > 0) {
                     simpleName = simpleName.substring(0, dollarIndex)
@@ -148,7 +151,10 @@ object AppLogger {
                 return formatTag(simpleName)
             }
         }
-        throw IllegalStateException("Unable to determine caller class name from stack trace.")
+
+        // Logging must never crash the application if R8/inlining removes
+        // the expected caller frame.
+        return formatTag("App")
     }
 
     /**
