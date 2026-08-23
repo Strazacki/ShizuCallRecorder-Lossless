@@ -133,8 +133,8 @@ android {
         minSdk = 30
         targetSdk = 36
         // Keep theses two values hard-coded here and update them per version. (To keep F-Droid compatibility since their parser is very basic)
-        versionCode = 15
-        versionName = "1.2.0"
+        versionCode = 20
+        versionName = "1.3.3-lossless"
 
         buildConfigField("String", "SCRCPY_VERSION", "\"$scrcpyVersion\"")
         buildConfigField("String", "SCRCPY_SERVER_SHA256", "\"$scrcpyServerSha256\"")
